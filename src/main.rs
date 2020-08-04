@@ -17,7 +17,7 @@ fn main() {
     const bytes_per_frame: usize = (width * height * bytes_per_pixel) as usize;
 
     const fb_start_x: i32 = 0;
-    const fb_start_y: i32 = 400;
+    const fb_start_y: i32 = 0;
 
     const scale: u32 = 3;
 
@@ -163,7 +163,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
                         }
                     }else {
-                        if gray < 26 {
+                        if gray > 255 - 26 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
@@ -173,7 +173,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
-                        }else if gray < 51 {
+                        }else if gray > 255 - 51 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
@@ -183,7 +183,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
-                        }else if gray < 77  {
+                        }else if gray > 255 - 77  {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
@@ -193,7 +193,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
-                        }else if gray < 102 {
+                        }else if gray > 255 - 102 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
@@ -203,7 +203,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
-                        }else if gray < 128 {
+                        }else if gray > 255 - 128 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
@@ -213,7 +213,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
-                        }else if gray < 154 {
+                        }else if gray > 255 - 154 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
@@ -223,7 +223,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
-                        }else if gray < 179 {
+                        }else if gray > 255 - 179 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
@@ -233,7 +233,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
-                        }else if gray < 205 {
+                        }else if gray > 255 - 205 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
@@ -243,7 +243,7 @@ fn main() {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
-                        }else if gray < 230 {
+                        }else if gray > 255 - 230 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
@@ -274,7 +274,7 @@ fn main() {
             }
 
 
-            if counter % 25*15 == 0 {
+            if counter % 25*5 == 0 {
                 token_queue.push(fb.full_refresh(
                     common::waveform_mode::WAVEFORM_MODE_GC16,
                     common::display_temp::TEMP_USE_REMARKABLE_DRAW,
@@ -290,8 +290,8 @@ fn main() {
                     common::waveform_mode::WAVEFORM_MODE_DU,
                     common::display_temp::TEMP_USE_REMARKABLE_DRAW,
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-                    0,
-                    false
+                    common::DRAWING_QUANT_BIT_3,
+                    true
                 ));
             }
             
