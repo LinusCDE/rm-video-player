@@ -10,16 +10,16 @@ fn main() {
     // Can be done on device with this resolution
     // ffmpeg -i VIDEO_FILE.mp4 -vf realtime -f rawvideo -pix_fmt rgb24 -video_size 426x240 pipe:1 | ./rm-video-player
 
-    const width: u32 = 468;
-    const height: u32 = 234;
+    const width: u32 = 320;
+    const height: u32 = 240;
     const bytes_per_pixel: u32 = 3; // rgb24
     
     const bytes_per_frame: usize = (width * height * bytes_per_pixel) as usize;
 
-    const fb_start_x: i32 = 0;
-    const fb_start_y: i32 = 0;
+    const fb_start_x: i32 = 200;
+    const fb_start_y: i32 = 400;
 
-    const scale: u32 = 3;
+    const scale: u32 = 2;
 
     // Get framebuffer and clear it
     let mut fb = core::Framebuffer::new("/dev/fb0");
@@ -89,20 +89,21 @@ fn main() {
                     const SIMPLE: bool = true;
                     if SIMPLE {
                         if gray < 85 {
-                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
-                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
-                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
-                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
-                        }else if gray < 127 {
-                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
-                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
-                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
-                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
-                        }else {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                            
+                        }else if gray < 127 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                        }else {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
                         }
                     }else {
 
@@ -274,7 +275,7 @@ fn main() {
             }
 
 
-            if counter % 25*5 == 0 {
+            if counter % 25*5 == 0 && false {
                 token_queue.push(fb.full_refresh(
                     common::waveform_mode::WAVEFORM_MODE_GC16,
                     common::display_temp::TEMP_USE_REMARKABLE_DRAW,
@@ -290,8 +291,8 @@ fn main() {
                     common::waveform_mode::WAVEFORM_MODE_DU,
                     common::display_temp::TEMP_USE_REMARKABLE_DRAW,
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-                    common::DRAWING_QUANT_BIT_3,
-                    true
+                    0,
+                    false
                 ));
             }
             
