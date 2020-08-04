@@ -10,14 +10,16 @@ fn main() {
     // Can be done on device with this resolution
     // ffmpeg -i VIDEO_FILE.mp4 -vf realtime -f rawvideo -pix_fmt rgb24 -video_size 426x240 pipe:1 | ./a2-video-player
 
-    const width: u32 = 426;
-    const height: u32 = 240;
+    const width: u32 = 468;
+    const height: u32 = 234;
     const bytes_per_pixel: u32 = 3; // rgb8
     
     const bytes_per_frame: usize = (width * height * bytes_per_pixel) as usize;
 
-    const fb_start_x: i32 = 100;
-    const fb_start_y: i32 = 800;
+    const fb_start_x: i32 = 0;
+    const fb_start_y: i32 = 400;
+
+    const scale: u32 = 3;
 
     // Get framebuffer and clear it
     let mut fb = core::Framebuffer::new("/dev/fb0");
@@ -33,7 +35,7 @@ fn main() {
     
     let (tx, rx): (SyncSender<[u8; bytes_per_frame]>, Receiver<[u8; bytes_per_frame]>) = sync_channel(1); // 1 Buffered frame
     let thread_handle = thread::spawn(move || {
-        let fb_area = common::mxcfb_rect { top: fb_start_y as u32, left: fb_start_x as u32, width: width * 2, height: height * 2 };
+        let fb_area = common::mxcfb_rect { top: fb_start_y as u32, left: fb_start_x as u32, width: width * scale, height: height * scale };
 
         let mut prev_buffer: Option<[u8; bytes_per_frame]> = None;
 
@@ -51,9 +53,6 @@ fn main() {
             let mut r;
             let mut g;
             let mut b;
-            let mut pr;
-            let mut pg;
-            let mut pb;
             while buffer_index < buffer.len() {
                 r = buffer[buffer_index];
                 g = buffer[buffer_index+1];
@@ -74,55 +73,228 @@ fn main() {
                     fb_x = 0;
                 }
 
-                let changed = if let Some(prev_buffer) = prev_buffer {
-                    pr = prev_buffer[buffer_index];
-                    pg = prev_buffer[buffer_index+1];
-                    pb = prev_buffer[buffer_index+2];
-                    pr != r || pg != g || pb != b
-                } else { true };
-                
                 buffer_index += 3;
 
 
-                if changed {
-                    //fb.write_pixel(cgmath::Point2 { x: fb_x*2, y: fb_y*2 }, common::color::RGB(r, g, b));
 
-                    let gray = ((r as f32 + g as f32 + b as f32) / 3.0) as u8;
-                    if gray < 85 {
-                        // Black
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
-                    }else if gray > 170 {
-                        // White
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                let gray = ((r as f32 + g as f32 + b as f32) / 3.0) as u8;
+                // (42,66666666666667)
+                if scale == 1{
+                    if gray < 128 {
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + fb_x, y: fb_start_y + fb_y }, common::color::GRAY(0));
                     }else {
-                        // Gray (custom dither)
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
-                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + fb_x, y: fb_start_y + fb_y }, common::color::GRAY(255));
                     }
-                    //fb.write_pixel(cgmath::Point2 { x: fb_x*2, y: fb_y*2 }, common::color::GRAY(gray));
+                }else if scale == 2 {
+                    const SIMPLE: bool = true;
+                    if SIMPLE {
+                        if gray < 85 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                        }else if gray < 127 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                        }else {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                        }
+                    }else {
+
+                        if gray < 42 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                        }else if gray < 85 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                        }else if gray < 128 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                        }else if gray < 170 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                        }else if gray < 213 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                        }else {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                        }
+                    }
+                }else if scale == 3 {
+                    const SIMPLE: bool = false;
+                    if SIMPLE {
+                            if gray < 128 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                        }else {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                        }
+                    }else {
+                        if gray < 26 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                        }else if gray < 51 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                        }else if gray < 77  {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                        }else if gray < 102 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                        }else if gray < 128 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                        }else if gray < 154 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                        }else if gray < 179 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                        }else if gray < 205 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                        }else if gray < 230 {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(0));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                        }else {
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+0) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+1) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+0), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+1), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                            fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*3+2), y: fb_start_y + (fb_y*3+2) }, common::color::GRAY(255));
+                        }
+                    }
                 }
+                
+                //fb.write_pixel(cgmath::Point2 { x: fb_x*2, y: fb_y*2 }, common::color::GRAY(gray));
+
+
                 fb_x += 1;
             }
 
 
-            // Toy with this!
-            token_queue.push(fb.partial_refresh(
-                &fb_area,
-                refresh::PartialRefreshMode::Async,
-                common::waveform_mode::WAVEFORM_MODE_DU,
-                common::display_temp::TEMP_USE_REMARKABLE_DRAW,
-                common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-                0,
-                false
-            ));
+            if counter % 25*15 == 0 {
+                token_queue.push(fb.full_refresh(
+                    common::waveform_mode::WAVEFORM_MODE_GC16,
+                    common::display_temp::TEMP_USE_REMARKABLE_DRAW,
+                    common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
+                    0,
+                    true
+                ));
+            }else {
+                // Toy with this!
+                token_queue.push(fb.partial_refresh(
+                    &fb_area,
+                    refresh::PartialRefreshMode::Async,
+                    common::waveform_mode::WAVEFORM_MODE_DU,
+                    common::display_temp::TEMP_USE_REMARKABLE_DRAW,
+                    common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
+                    0,
+                    false
+                ));
+            }
+            
             if token_queue.len() == token_queue_size {
                 let token = token_queue.remove(0);
                 fb.wait_refresh_complete(token);
