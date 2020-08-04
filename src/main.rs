@@ -8,11 +8,11 @@ use libremarkable::cgmath;
 
 fn main() {
     // Can be done on device with this resolution
-    // ffmpeg -i VIDEO_FILE.mp4 -vf realtime -f rawvideo -pix_fmt rgb24 -video_size 426x240 pipe:1 | ./a2-video-player
+    // ffmpeg -i VIDEO_FILE.mp4 -vf realtime -f rawvideo -pix_fmt rgb24 -video_size 426x240 pipe:1 | ./rm-video-player
 
     const width: u32 = 468;
     const height: u32 = 234;
-    const bytes_per_pixel: u32 = 3; // rgb8
+    const bytes_per_pixel: u32 = 3; // rgb24
     
     const bytes_per_frame: usize = (width * height * bytes_per_pixel) as usize;
 
