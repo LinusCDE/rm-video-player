@@ -16,7 +16,7 @@ fn main() {
     
     const bytes_per_frame: usize = (width * height * bytes_per_pixel) as usize;
 
-    const fb_start_x: i32 = 200;
+    const fb_start_x: i32 = 100;
     const fb_start_y: i32 = 800;
 
     // Get framebuffer and clear it
@@ -33,7 +33,7 @@ fn main() {
     
     let (tx, rx): (SyncSender<[u8; bytes_per_frame]>, Receiver<[u8; bytes_per_frame]>) = sync_channel(1); // 1 Buffered frame
     let thread_handle = thread::spawn(move || {
-        let fb_area = common::mxcfb_rect { top: fb_start_y as u32, left: fb_start_x as u32, width, height };
+        let fb_area = common::mxcfb_rect { top: fb_start_y as u32, left: fb_start_x as u32, width: width * 2, height: height * 2 };
 
         let mut prev_buffer: Option<[u8; bytes_per_frame]> = None;
 
@@ -45,8 +45,8 @@ fn main() {
             let token_queue_size = 10;
 
             let mut buffer_index: usize = 0;
-            let mut fb_x: i32 = fb_start_x;
-            let mut fb_y: i32 = fb_start_y;
+            let mut fb_x: i32 = 0;
+            let mut fb_y: i32 = 0;
             
             let mut r;
             let mut g;
@@ -65,13 +65,13 @@ fn main() {
                 b = b - (r % 64);*/
 
                 // Monochrome
-                r = if r < 128 { 0 } else { 255 };
+                /*r = if r < 128 { 0 } else { 255 };
                 g = if g < 128 { 0 } else { 255 };
-                b = if b < 128 { 0 } else { 255 };
+                b = if b < 128 { 0 } else { 255 };*/
                 
-                if fb_x >= fb_start_x + width as i32 {
+                if fb_x >= width as i32 {
                     fb_y += 1;
-                    fb_x = fb_start_x;
+                    fb_x = 0;
                 }
 
                 let changed = if let Some(prev_buffer) = prev_buffer {
@@ -85,12 +85,30 @@ fn main() {
 
 
                 if changed {
-                    fb.write_pixel(cgmath::Point2 { x: fb_x, y: fb_y }, common::color::RGB(r, g, b));
+                    //fb.write_pixel(cgmath::Point2 { x: fb_x*2, y: fb_y*2 }, common::color::RGB(r, g, b));
 
-                    //let gray = ((r as f32 + g as f32 + b as f32) / 3.0) as u8;
-                    //fb.write_pixel(cgmath::Point2 { x: fb_x, y: fb_y }, common::color::GRAY(gray));
+                    let gray = ((r as f32 + g as f32 + b as f32) / 3.0) as u8;
+                    if gray < 85 {
+                        // Black
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                    }else if gray > 170 {
+                        // White
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                    }else {
+                        // Gray (custom dither)
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
+                        fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
+                    }
+                    //fb.write_pixel(cgmath::Point2 { x: fb_x*2, y: fb_y*2 }, common::color::GRAY(gray));
                 }
-                //fb.write_pixel(cgmath::Point2 { x: fb_x, y: fb_y }, common::color::RGB(0, 0, 0));
                 fb_x += 1;
             }
 
@@ -101,7 +119,7 @@ fn main() {
                 refresh::PartialRefreshMode::Async,
                 common::waveform_mode::WAVEFORM_MODE_DU,
                 common::display_temp::TEMP_USE_REMARKABLE_DRAW,
-                common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
+                common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
                 0,
                 false
             ));
