@@ -16,8 +16,8 @@ fn main() {
     
     const bytes_per_frame: usize = (width * height * bytes_per_pixel) as usize;
 
-    const fb_start_x: i32 = 200;
-    const fb_start_y: i32 = 400;
+    const fb_start_x: i32 = 500;
+    const fb_start_y: i32 = 760;
 
     const scale: u32 = 2;
 
@@ -86,7 +86,7 @@ fn main() {
                         fb.write_pixel(cgmath::Point2 { x: fb_start_x + fb_x, y: fb_start_y + fb_y }, common::color::GRAY(255));
                     }
                 }else if scale == 2 {
-                    const SIMPLE: bool = true;
+                    const SIMPLE: bool = false;
                     if SIMPLE {
                         if gray < 85 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
@@ -107,27 +107,27 @@ fn main() {
                         }
                     }else {
 
-                        if gray < 42 {
+                        if gray > 255 - 42 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
-                        }else if gray < 85 {
+                        }else if gray > 255 - 85 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
-                        }else if gray < 128 {
+                        }else if gray > 255 - 128 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
-                        }else if gray < 170 {
+                        }else if gray > 255 - 170 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
-                        }else if gray < 213 {
+                        }else if gray > 255 - 213 {
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+0), y: fb_start_y + (fb_y*2+1) }, common::color::GRAY(255));
                             fb.write_pixel(cgmath::Point2 { x: fb_start_x + (fb_x*2+1), y: fb_start_y + (fb_y*2+0) }, common::color::GRAY(0));
