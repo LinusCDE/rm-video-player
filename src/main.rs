@@ -13,13 +13,13 @@ fn main() {
 
     //const width: u32 = 320;
     //const height: u32 = 180;
-    const width: u32 = 1048;
-    const height: u32 = 1864;
+    const width: u32 = 640;
+    const height: u32 = 1280;
 
     const bytes_per_frame: usize = (width * height / 8) as usize;
 
-    const fb_start_x: i32 = 180;
-    const fb_start_y: i32 = 0;
+    const fb_start_x: i32 = 382;
+    const fb_start_y: i32 = 296;
 
     const frame_duration: Duration = Duration::from_micros(1000000 / 25);
 
