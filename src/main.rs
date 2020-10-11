@@ -9,7 +9,13 @@ use std::time::{Duration, SystemTime};
 
 fn main() {
     // Can be done on device with this resolution
-    // ffmpeg -i VIDEO_FILE.mp4 -vf realtime -f rawvideo -pix_fmt rgb24 -video_size 426x240 pipe:1 | ./rm-video-player
+    // Convert a video (preferrably 720p directly with -f)
+    // youtube-dl https://www.youtube.com/watch\?v\=naTxqt1wVxc -o- | ffmpeg -i - -vf transpose=1,format=monow,scale=-1:1280 -pix_fmt monow -f rawvideo /tmp/myvideo_hopefully_640_1280_25fps.raw
+    // Probaby compress this with zstd (about 4x for those videos): zstd -k /tmp/myvideo_hopefully_640_1280_25fps.raw
+    // Copy to your remarkable: scp /tmp/myvideo_hopefully_640_1280_25fps.raw.zst remarkable:
+    // Play it there (remarkables ssh): zstd -cd myvideo_hopefully_640_1280_25fps.raw.zst | ./rm-video-player # (zstd was installed with opkg)
+    //
+    // If resolution or framerate don't match. Please adjust below. THE WIDTH HAS TO BE DIVIDABLE BY 8 (or you fix that in the source)
 
     //const width: u32 = 320;
     //const height: u32 = 180;
