@@ -151,29 +151,35 @@ fn main() {
     thread_handle.join().unwrap();
 }
 
+/// Converts a BW raw buffer into rM 1 framebuffer data.
+/// BW contains one pixel per bit.
+/// The reMarkable Framebuffer contains one pixel per 2 byte
+/// Using pointers (unsafe) gives a big additional performance boost.
 #[inline]
 fn bw_to_fb_data(width: usize, height: usize, bw_data: &[u8]) -> Vec<u8> {
     let mut fb_data: Vec<u8> = vec![0u8; (width as usize * 2) * height as usize];
-
-    let mut i = 0;
-    for byte in bw_data {
-        fb_data[i + 0] = if byte & 0b10000000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 1] = if byte & 0b10000000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 2] = if byte & 0b01000000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 3] = if byte & 0b01000000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 4] = if byte & 0b00100000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 5] = if byte & 0b00100000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 6] = if byte & 0b00010000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 7] = if byte & 0b00010000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 8] = if byte & 0b00001000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 9] = if byte & 0b00001000 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 10] = if byte & 0b00000100 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 11] = if byte & 0b00000100 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 12] = if byte & 0b00000010 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 13] = if byte & 0b00000010 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 14] = if byte & 0b00000001 == 0 { 0xFF } else { 0x00 };
-        fb_data[i + 15] = if byte & 0b00000001 == 0 { 0xFF } else { 0x00 };
-        i += 16;
+    unsafe {
+        let fb_data_ptr = fb_data.as_mut_ptr();
+        let mut i = 0;
+        for byte in bw_data {
+            *fb_data_ptr.add(i + 0) = if byte & 0b10000000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 1) = if byte & 0b10000000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 2) = if byte & 0b01000000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 3) = if byte & 0b01000000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 4) = if byte & 0b00100000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 5) = if byte & 0b00100000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 6) = if byte & 0b00010000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 7) = if byte & 0b00010000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 8) = if byte & 0b00001000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 9) = if byte & 0b00001000 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 10) = if byte & 0b00000100 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 11) = if byte & 0b00000100 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 12) = if byte & 0b00000010 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 13) = if byte & 0b00000010 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 14) = if byte & 0b00000001 == 0 { 0xFF } else { 0x00 };
+            *fb_data_ptr.add(i + 15) = if byte & 0b00000001 == 0 { 0xFF } else { 0x00 };
+            i += 16;
+        }
     }
 
     fb_data
