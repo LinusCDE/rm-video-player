@@ -1,10 +1,8 @@
 use clap::{crate_authors, crate_version, Clap};
-use libremarkable::cgmath;
 use libremarkable::framebuffer::*;
 use std::io::stdin;
-use std::io::{Cursor, Read, Write};
-use std::sync::mpsc::{channel, sync_channel, Receiver, Sender, SyncSender};
-use std::sync::{Arc, Mutex};
+use std::io::Read;
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
 use std::time::{Duration, SystemTime};
 
@@ -155,33 +153,28 @@ fn main() {
 
 #[inline]
 fn bw_to_fb_data(width: usize, height: usize, bw_data: &[u8]) -> Vec<u8> {
-    let fb_data: Vec<u8> = vec![0u8; (width as usize * 2) * height as usize];
+    let mut fb_data: Vec<u8> = vec![0u8; (width as usize * 2) * height as usize];
 
-    let mut fb_data_cur = Cursor::new(fb_data);
+    let mut i = 0;
+    for byte in bw_data {
+        fb_data[i + 0] = if byte & 0b10000000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 1] = if byte & 0b10000000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 2] = if byte & 0b01000000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 3] = if byte & 0b01000000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 4] = if byte & 0b00100000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 5] = if byte & 0b00100000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 6] = if byte & 0b00010000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 7] = if byte & 0b00010000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 8] = if byte & 0b00001000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 9] = if byte & 0b00001000 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 10] = if byte & 0b00000100 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 11] = if byte & 0b00000100 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 12] = if byte & 0b00000010 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 13] = if byte & 0b00000010 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 14] = if byte & 0b00000001 == 0 { 0xFF } else { 0x00 };
+        fb_data[i + 15] = if byte & 0b00000001 == 0 { 0xFF } else { 0x00 };
+        i += 16;
+    }
 
-    bw_data
-        .iter()
-        .map(|byte| {
-            [
-                if byte & 0b10000000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b10000000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b01000000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b01000000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00100000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00100000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00010000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00010000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00001000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00001000 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00000100 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00000100 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00000010 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00000010 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00000001 == 0 { 0xFF } else { 0x00 },
-                if byte & 0b00000001 == 0 { 0xFF } else { 0x00 },
-            ]
-        })
-        .for_each(|data| fb_data_cur.write_all(&data).unwrap());
-
-    fb_data_cur.into_inner()
+    fb_data
 }
