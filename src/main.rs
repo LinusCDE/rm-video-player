@@ -88,11 +88,7 @@ fn main() {
         for buffer in rx {
             counter += 1;
 
-            fb.restore_region(
-                fb_area,
-                &bw_to_fb_data(width as usize, height as usize, &buffer),
-            )
-            .unwrap();
+            fb.restore_region(fb_area, &bw_to_fb_data(&buffer)).unwrap();
 
             // Toy with this!
             //token_queue.push(
@@ -156,11 +152,11 @@ fn main() {
 /// The reMarkable Framebuffer contains one pixel per 2 byte
 /// Using pointers (unsafe) gives a big additional performance boost.
 #[inline]
-fn bw_to_fb_data(width: usize, height: usize, bw_data: &[u8]) -> Vec<u8> {
-    let mut fb_data: Vec<u8> = vec![0u8; (width as usize * 2) * height as usize];
+fn bw_to_fb_data(bw_data: &[u8]) -> Vec<u8> {
+    let mut fb_data: Vec<u8> = vec![0u8; bw_data.len() * 16];
+    let mut i = 0;
     unsafe {
         let fb_data_ptr = fb_data.as_mut_ptr();
-        let mut i = 0;
         for byte in bw_data {
             *fb_data_ptr.add(i + 0) = if byte & 0b10000000 == 0 { 0xFF } else { 0x00 };
             *fb_data_ptr.add(i + 1) = if byte & 0b10000000 == 0 { 0xFF } else { 0x00 };
@@ -180,6 +176,10 @@ fn bw_to_fb_data(width: usize, height: usize, bw_data: &[u8]) -> Vec<u8> {
             *fb_data_ptr.add(i + 15) = if byte & 0b00000001 == 0 { 0xFF } else { 0x00 };
             i += 16;
         }
+    }
+
+    if i != fb_data.len() {
+        panic!("Not the full buffer was filled!");
     }
 
     fb_data
