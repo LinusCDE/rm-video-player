@@ -153,30 +153,35 @@ fn main() {
     thread_handle.join().unwrap();
 }
 
+#[inline]
 fn bw_to_fb_data(width: usize, height: usize, bw_data: &[u8]) -> Vec<u8> {
-    let fb_data: Vec<u8> = Vec::with_capacity((width as usize * 2) * height as usize);
+    let fb_data: Vec<u8> = vec![0u8; (width as usize * 2) * height as usize];
 
-    let mut bw_data_cur = Cursor::new(bw_data);
     let mut fb_data_cur = Cursor::new(fb_data);
 
-    for _y in 0..height {
-        let mut x = 0;
-        while x < width {
-            let mut buf = [0u8; 1];
-            bw_data_cur.read_exact(&mut buf).unwrap();
-            for sub in 0..8 {
-                let is_1 = (buf[0] & (0b10000000 >> sub)) > 0;
-                fb_data_cur
-                    .write_all(&if is_1 {
-                        common::color::BLACK.as_native()
-                    } else {
-                        common::color::WHITE.as_native()
-                    })
-                    .unwrap();
-            }
-            x += 8;
-        }
-    }
+    bw_data
+        .iter()
+        .map(|byte| {
+            [
+                if byte & 0b10000000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b10000000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b01000000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b01000000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00100000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00100000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00010000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00010000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00001000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00001000 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00000100 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00000100 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00000010 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00000010 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00000001 == 0 { 0xFF } else { 0x00 },
+                if byte & 0b00000001 == 0 { 0xFF } else { 0x00 },
+            ]
+        })
+        .for_each(|data| fb_data_cur.write_all(&data).unwrap());
 
     fb_data_cur.into_inner()
 }
