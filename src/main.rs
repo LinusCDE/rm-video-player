@@ -1,11 +1,29 @@
+use clap::{crate_authors, crate_version, Clap};
 use libremarkable::cgmath;
 use libremarkable::framebuffer::*;
 use std::io::stdin;
-use std::io::Read;
+use std::io::{Cursor, Read, Write};
 use std::sync::mpsc::{channel, sync_channel, Receiver, Sender, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, SystemTime};
+
+#[derive(Clap)]
+#[clap(version = crate_version!(), author = crate_authors!())]
+pub struct Opts {
+    #[clap(long, short, about = "Width of video (has to be dividable by 8)")]
+    width: u16,
+    #[clap(long, short, about = "Height of video")]
+    height: u16,
+
+    #[clap(short, about = "X Pos")]
+    x: u16,
+    #[clap(short, about = "Y Pos")]
+    y: u16,
+
+    #[clap(long, short, about = "Framerate of the Video")]
+    fps: u8,
+}
 
 fn main() {
     // Can be done on device with this resolution
@@ -17,20 +35,30 @@ fn main() {
     //
     // If resolution or framerate don't match. Please adjust below. THE WIDTH HAS TO BE DIVIDABLE BY 8 (or you fix that in the source)
 
-    //const width: u32 = 320;
-    //const height: u32 = 180;
-    const width: u32 = 640;
-    const height: u32 = 1280;
+    if libremarkable::device::CURRENT_DEVICE.model != libremarkable::device::Model::Gen1 {
+        panic!("Only the reMarkable 1 is supported.");
+    }
 
-    const bytes_per_frame: usize = (width * height / 8) as usize;
+    let opts: Opts = Opts::parse();
 
-    const fb_start_x: i32 = 382;
-    const fb_start_y: i32 = 296;
+    if opts.width % 8 != 0 {
+        panic!("Width has to be dividable by 8!");
+    }
 
-    const frame_duration: Duration = Duration::from_micros(1000000 / 25);
+    if opts.x + opts.width > common::DISPLAYWIDTH || opts.y + opts.height > common::DISPLAYHEIGHT {
+        panic!("Video is not allowed to go out of bounds!");
+    }
+
+    let width = opts.width as u32;
+    let height = opts.height as u32;
+    let fb_start_x: i32 = opts.x as i32;
+    let fb_start_y: i32 = opts.y as i32;
+
+    let bytes_per_frame: usize = ((width / 8) * height) as usize;
+    let frame_duration: Duration = Duration::from_micros(1000000 / opts.fps as u64);
 
     // Get framebuffer and clear it
-    let mut fb = core::Framebuffer::new("/dev/fb0");
+    let mut fb = core::Framebuffer::from_path("/dev/fb0");
     fb.clear();
     fb.full_refresh(
         common::waveform_mode::WAVEFORM_MODE_INIT,
@@ -39,12 +67,9 @@ fn main() {
         0,
         true,
     );
-    thread::sleep_ms(100);
+    thread::sleep(Duration::from_millis(100));
 
-    let (tx, rx): (
-        SyncSender<[u8; bytes_per_frame]>,
-        Receiver<[u8; bytes_per_frame]>,
-    ) = sync_channel(1); // 1 Buffered frame
+    let (tx, rx): (SyncSender<Vec<u8>>, Receiver<Vec<u8>>) = sync_channel(1); // 1 Buffered frame
     let thread_handle = thread::spawn(move || {
         let fb_area = common::mxcfb_rect {
             top: fb_start_y as u32,
@@ -65,39 +90,11 @@ fn main() {
         for buffer in rx {
             counter += 1;
 
-            //let mut token_queue: Vec<u32> = vec![];
-            //let token_queue_size = 50;
-
-            let mut buffer_index: usize = 0;
-            let mut fb_x: i32 = 0;
-            let mut fb_y: i32 = 0;
-
-            while buffer_index < buffer.len() {
-                for sub in 0..8 {
-                    let is_1 = (buffer[buffer_index] & (0b10000000 >> sub)) > 0;
-                    if fb_x >= width as i32 {
-                        fb_y += 1;
-                        fb_x = 0;
-                    }
-
-                    fb.write_pixel(
-                        cgmath::Point2 {
-                            x: fb_start_x + fb_x,
-                            y: fb_start_y + fb_y,
-                        },
-                        if is_1 {
-                            common::color::BLACK
-                        } else {
-                            common::color::WHITE
-                        },
-                    );
-                    fb_x += 1;
-                }
-
-                buffer_index += 1;
-
-                //fb.write_pixel(cgmath::Point2 { x: fb_x*2, y: fb_y*2 }, common::color::GRAY(gray));
-            }
+            fb.restore_region(
+                fb_area,
+                &bw_to_fb_data(width as usize, height as usize, &buffer),
+            )
+            .unwrap();
 
             // Toy with this!
             //token_queue.push(
@@ -129,7 +126,7 @@ fn main() {
         println!("RX: Received: {} frames", counter);
     });
 
-    let mut buffer = [0u8; bytes_per_frame];
+    let mut buffer = vec![0u8; bytes_per_frame];
     let mut succeeded = 0;
     let mut dropped = 0;
 
@@ -139,6 +136,8 @@ fn main() {
             Ok(_) => succeeded += 1,
             Err(_) => dropped += 1,
         }
+        buffer = vec![0u8; bytes_per_frame];
+
         let elapsed = last_frame.elapsed().unwrap();
         if frame_duration > elapsed {
             thread::sleep(frame_duration - elapsed);
@@ -152,4 +151,32 @@ fn main() {
     drop(tx); // Basically end of scope for sender (all senders out of scope = closed)
 
     thread_handle.join().unwrap();
+}
+
+fn bw_to_fb_data(width: usize, height: usize, bw_data: &[u8]) -> Vec<u8> {
+    let fb_data: Vec<u8> = Vec::with_capacity((width as usize * 2) * height as usize);
+
+    let mut bw_data_cur = Cursor::new(bw_data);
+    let mut fb_data_cur = Cursor::new(fb_data);
+
+    for _y in 0..height {
+        let mut x = 0;
+        while x < width {
+            let mut buf = [0u8; 1];
+            bw_data_cur.read_exact(&mut buf).unwrap();
+            for sub in 0..8 {
+                let is_1 = (buf[0] & (0b10000000 >> sub)) > 0;
+                fb_data_cur
+                    .write_all(&if is_1 {
+                        common::color::BLACK.as_native()
+                    } else {
+                        common::color::WHITE.as_native()
+                    })
+                    .unwrap();
+            }
+            x += 8;
+        }
+    }
+
+    fb_data_cur.into_inner()
 }
