@@ -21,4 +21,8 @@ See src/main.rs for preparing a video for it.
 
 ## reMarkable 2 support
 
-As of now this sw won't work on the rM 2. For that to happen, libremarkable has to be made compatible first, which will require figuring out the inner workings of the new framebuffer.
+Since the reMarkable 2, put the handling of the framebuffer into software, this made initial development really hard. Luckily some [work by amazing people](https://github.com/ddvk/remarkable2-framebuffer/), managed to hook into it, making the framebuffer accessible to every app once again.
+
+Sadly, this project will probably really work on the rM 2 anyway. It can technically work, but the handling in software makes especially, complex and huge updates a lot slower. Playing Videos on the rM 2 may at best get 2-3 fps at some medium size where the rM 1 managed somewhere around 10 FPS and that even without some weird async frame glitches the rM 2 has.
+
+So consider this a rM 1-only project as there would have to be some miracle to work properly. That miracle would most likely be [waved](https://github.com/matteodelabre/waved). But not sure when this will happen. Miracles are rare but not impossible. ;)
